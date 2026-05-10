@@ -211,6 +211,32 @@ def dyaus_stats():
     })
 
 
+@app.route("/api/dyaus/db/<tabel>")
+def dyaus_db_proxy(tabel):
+    """Proxy endpoint voor dashboard — read-only toegang tot Dyaus tabellen."""
+    TOEGESTANE_TABELLEN = {
+        "dyaus_sessies", "dyaus_profielen", "dyaus_berichten",
+        "dyaus_olie_aanbevelingen", "dyaus_emails", "dyaus_analytics",
+    }
+    if tabel not in TOEGESTANE_TABELLEN:
+        return jsonify({"error": "Tabel niet toegestaan"}), 403
+
+    if not db.is_actief():
+        return jsonify([])
+
+    # Bouw query params door
+    params = {}
+    for key in ["order", "limit", "select", "sessie_id", "profiel_id"]:
+        val = request.args.get(key)
+        if val:
+            params[key] = val
+    if "limit" not in params:
+        params["limit"] = "200"
+
+    rows = db._sb_get(tabel, params)
+    return jsonify(rows)
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
