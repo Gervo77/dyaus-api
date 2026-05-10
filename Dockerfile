@@ -11,8 +11,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN chmod +x start.sh
 
-ENV PORT=8080
 EXPOSE 8080
-ENTRYPOINT ["./start.sh"]
+CMD ["gunicorn", "app:app", "-c", "gunicorn.conf.py"]
