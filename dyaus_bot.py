@@ -389,7 +389,14 @@ def dyaus_antwoord(
             sessie.naam = bd["naam"]
             sessie.intake_fase = "compleet"
             sessie.stem_data = bereken_stem_data(bd)
-        except (KeyError, ValueError):
+            # Voeg context toe zodat Claude weet dat intake al gedaan is
+            dag = bd["day"]
+            maand = bd["month"]
+            jaar = bd["year"]
+            sessie.voeg_bericht_toe("assistant",
+                f"Ik heb je gegevens. {bd['naam']}, geboren {dag}-{maand}-{jaar} in {bd.get('plaats', '?')}. Het veld opent zich.")
+        except (KeyError, ValueError) as e:
+            print(f"Geboortedata parse fout: {e}")
             pass  # ongeldige data, val terug op normale intake
 
     if profiel_key and not sessie.birth_data:
