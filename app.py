@@ -16,6 +16,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from dyaus_bot import dyaus_antwoord
+import dyaus_db as db
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY_TRATE", "")
 
@@ -165,14 +166,49 @@ def email_lezing():
 
         if res.status_code in (200, 201):
             print(f"Email verstuurd naar {email}")
+            resend_data = res.json() if res.text else {}
+            resend_id = resend_data.get("id", "")
+
+            # Update profiel met email + log in database
+            profiel = db.zoek_profiel(naam)
+            profiel_id = profiel["id"] if profiel else None
+            if profiel and not profiel.get("email"):
+                db.sla_profiel_op({"naam": naam, "year": profiel.get("geboorte_jaar"),
+                                   "month": profiel.get("geboorte_maand"),
+                                   "day": profiel.get("geboorte_dag")}, email=email)
+            db.log_email(
+                profiel_id=profiel_id,
+                email_adres=email,
+                status="verstuurd",
+                resend_id=resend_id,
+                olieen=olieen if olieen else None,
+            )
+            db.log_event("email_verstuurd", profiel_id=profiel_id,
+                         metadata={"email": email, "type": "levensboek"})
+
             return jsonify({"status": "ok", "message": "Email verstuurd"})
         else:
             print(f"Resend fout: {res.status_code} — {res.text}")
+            # Log gefaalde email
+            db.log_email(email_adres=email, status="gefaald",
+                         fout_bericht=f"{res.status_code}: {res.text[:200]}")
             return jsonify({"error": "Email versturen mislukt"}), 500
 
     except Exception as e:
         print(f"Email fout: {e}")
+        db.log_email(email_adres=email, status="gefaald", fout_bericht=str(e)[:200])
         return jsonify({"error": "Email versturen mislukt"}), 500
+
+
+@app.route("/api/dyaus/stats")
+def dyaus_stats():
+    """Basisstatistieken voor Dyaus."""
+    return jsonify({
+        "database_actief": db.is_actief(),
+        "profielen_totaal": db.tel_profielen() if db.is_actief() else 0,
+        "sessies_vandaag": db.tel_sessies_vandaag() if db.is_actief() else 0,
+        "laatste_emails": db.laatste_emails(5) if db.is_actief() else [],
+    })
 
 
 if __name__ == "__main__":

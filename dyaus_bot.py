@@ -23,6 +23,8 @@ from dyaus_stem_engine import (
 import json
 from pathlib import Path
 
+import dyaus_db as db
+
 
 # ══════════════════════════════════════════════════════════════════
 # ELEMENT-OLIE KENNISBANK
@@ -162,12 +164,18 @@ class DyausSessie:
         self.intake_fase: str = "start"
         self.profiel_key: Optional[str] = None
         self.aangemaakt: datetime = datetime.now()
+        # Database IDs
+        self.db_sessie_id: Optional[str] = None   # UUID in dyaus_sessies
+        self.db_profiel_id: Optional[str] = None   # UUID in dyaus_profielen
 
     def is_intake_compleet(self) -> bool:
         return self.intake_fase == "compleet"
 
     def voeg_bericht_toe(self, role: str, text: str):
         self.berichten.append({"role": role, "text": text})
+        # Sla op in database
+        if self.db_sessie_id:
+            db.sla_bericht_op(self.db_sessie_id, role, text)
 
 
 _SESSIES: Dict[str, DyausSessie] = {}
@@ -175,7 +183,16 @@ _SESSIES: Dict[str, DyausSessie] = {}
 
 def get_of_maak_sessie(sessie_id: str) -> DyausSessie:
     if sessie_id not in _SESSIES:
-        _SESSIES[sessie_id] = DyausSessie(sessie_id)
+        sessie = DyausSessie(sessie_id)
+        # Maak of haal sessie in database
+        db_sessie = db.maak_of_haal_sessie(sessie_id)
+        if db_sessie:
+            sessie.db_sessie_id = db_sessie["id"]
+            sessie.intake_fase = db_sessie.get("intake_fase", "start")
+            if db_sessie.get("profiel_id"):
+                sessie.db_profiel_id = db_sessie["profiel_id"]
+            db.log_event("sessie_start", sessie_db_id=sessie.db_sessie_id)
+        _SESSIES[sessie_id] = sessie
     return _SESSIES[sessie_id]
 
 
@@ -573,6 +590,17 @@ def dyaus_antwoord(
             sessie.naam = bd["naam"]
             sessie.intake_fase = "compleet"
             sessie.stem_data = bereken_stem_data(bd)
+            # Sla profiel op in database
+            try:
+                zon_el = _bepaal_zon_element(bd)
+                maan_el = _bepaal_maan_element(bd)
+            except Exception:
+                zon_el, maan_el = None, None
+            db_profiel = db.sla_profiel_op(bd, zon_element=zon_el, maan_element=maan_el)
+            if db_profiel:
+                sessie.db_profiel_id = db_profiel["id"]
+                db.koppel_profiel_aan_sessie(sessie.sessie_id, db_profiel["id"])
+                db.log_event("intake_compleet", sessie.db_sessie_id, db_profiel["id"])
             # Voeg context toe zodat Claude weet dat intake al gedaan is
             dag = bd["day"]
             maand = bd["month"]
@@ -593,6 +621,18 @@ def dyaus_antwoord(
                 sessie.profiel_key = key
                 sessie.intake_fase = "compleet"
                 sessie.stem_data = bereken_stem_data(bd)
+                # Sla profiel op in database
+                bd["profiel_key"] = key
+                try:
+                    zon_el = _bepaal_zon_element(bd)
+                    maan_el = _bepaal_maan_element(bd)
+                except Exception:
+                    zon_el, maan_el = None, None
+                db_profiel = db.sla_profiel_op(bd, zon_element=zon_el, maan_element=maan_el)
+                if db_profiel:
+                    sessie.db_profiel_id = db_profiel["id"]
+                    db.koppel_profiel_aan_sessie(sessie.sessie_id, db_profiel["id"])
+                    db.log_event("intake_compleet", sessie.db_sessie_id, db_profiel["id"])
 
     if not sessie.is_intake_compleet():
         return _handle_intake(sessie, bericht)
@@ -707,6 +747,20 @@ def _handle_intake(sessie: DyausSessie, bericht: str) -> dict:
         sessie.intake_fase = "compleet"
         sessie.stem_data = bereken_stem_data(sessie.birth_data)
 
+        # Sla profiel op in database (intake via chat)
+        try:
+            zon_el = _bepaal_zon_element(sessie.birth_data)
+            maan_el = _bepaal_maan_element(sessie.birth_data)
+        except Exception:
+            zon_el, maan_el = None, None
+        db_profiel = db.sla_profiel_op(
+            sessie.birth_data, zon_element=zon_el, maan_element=maan_el
+        )
+        if db_profiel:
+            sessie.db_profiel_id = db_profiel["id"]
+            db.koppel_profiel_aan_sessie(sessie.sessie_id, db_profiel["id"])
+            db.log_event("intake_compleet", sessie.db_sessie_id, db_profiel["id"])
+
         antwoord = _genereer_begroeting(sessie)
         sessie.voeg_bericht_toe("assistant", antwoord)
         return {
@@ -782,7 +836,12 @@ def _handle_gesprek(sessie: DyausSessie, bericht: str) -> dict:
     wil_olie = any(t in bericht.lower() for t in olie_triggers)
 
     if wil_lezing:
+        db.log_event("lezing", sessie.db_sessie_id, sessie.db_profiel_id)
         return _genereer_volledige_lezing(sessie)
+
+    if wil_olie:
+        db.log_event("olie_vraag", sessie.db_sessie_id, sessie.db_profiel_id,
+                     {"bericht": bericht[:200]})
 
     history = []
     for b in sessie.berichten[-10:]:
@@ -812,6 +871,8 @@ MEETDATA (gebruik alleen als gevraagd naar bewijs/cijfers):
 {data_blok}
 """
 
+    db.log_event("gesprek", sessie.db_sessie_id, sessie.db_profiel_id)
+
     antwoord = run_cloud_model(
         prompt=bericht,
         model=DYAUS_BOT_MODEL,
@@ -823,12 +884,40 @@ MEETDATA (gebruik alleen als gevraagd naar bewijs/cijfers):
 
     sessie.voeg_bericht_toe("assistant", antwoord)
 
+    # Detecteer olie-namen in antwoord en log ze
+    _log_olie_in_antwoord(sessie, antwoord)
+
     return {
         "antwoord": antwoord,
         "intake_fase": "compleet",
         "profiel_compleet": True,
         "naam": sessie.naam,
     }
+
+
+def _log_olie_in_antwoord(sessie: DyausSessie, antwoord: str):
+    """Detecteer olie-namen in Dyaus antwoord en log ze in database."""
+    if not sessie.db_profiel_id or not sessie.db_sessie_id:
+        return
+    olie_namen = [
+        "pepermunt", "kamille", "lavendel", "rozemarijn", "zwarte peper",
+        "gember", "vetiver", "wierook", "frankincense", "salie",
+        "hyssop", "eucalyptus", "mirre",
+    ]
+    antwoord_lower = antwoord.lower()
+    for olie in olie_namen:
+        if olie in antwoord_lower:
+            # Bepaal element van de olie
+            olie_element = None
+            for el_key, el_data in _OLIE_MATRIX.items():
+                for o in el_data.get("olieen", []):
+                    if o["naam"].lower() == olie:
+                        olie_element = el_key
+                        break
+            db.sla_olie_aanbeveling_op(
+                sessie.db_profiel_id, sessie.db_sessie_id,
+                olie, element=olie_element, trigger_type="veld",
+            )
 
 
 def _genereer_volledige_lezing(sessie: DyausSessie) -> dict:
