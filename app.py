@@ -49,6 +49,7 @@ def dyaus_chat():
     bericht = data.get("bericht", "").strip()
     profiel_key = data.get("profiel_key")
     profiel_code = data.get("profiel_code")
+    geboortedata = data.get("geboortedata")
 
     if not sessie_id or not bericht:
         return jsonify({"error": "sessie_id en bericht zijn verplicht"}), 400
@@ -59,6 +60,7 @@ def dyaus_chat():
             bericht=bericht,
             profiel_key=profiel_key,
             profiel_code=profiel_code,
+            geboortedata=geboortedata,
         )
         return jsonify(result)
     except Exception as e:

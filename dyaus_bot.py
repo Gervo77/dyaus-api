@@ -360,9 +360,37 @@ def dyaus_antwoord(
     bericht: str,
     profiel_key: Optional[str] = None,
     profiel_code: Optional[str] = None,
+    geboortedata: Optional[dict] = None,
 ) -> dict:
     sessie = get_of_maak_sessie(sessie_id)
     sessie.voeg_bericht_toe("user", bericht)
+
+    # Direct geboortedata meegeven (vanuit formulier / URL params)
+    if geboortedata and not sessie.is_intake_compleet():
+        try:
+            bd = {
+                "naam": geboortedata.get("naam", "Onbekend"),
+                "year": int(geboortedata["jaar"]),
+                "month": int(geboortedata["maand"]),
+                "day": int(geboortedata["dag"]),
+                "hour": int(geboortedata.get("uur", 12)),
+                "minute": int(geboortedata.get("minuut", 0)),
+                "lat": float(geboortedata.get("lat", 52.37)),
+                "lon": float(geboortedata.get("lon", 4.90)),
+                "plaats": geboortedata.get("plaats", ""),
+            }
+            # Probeer plaats te resolven als lat/lon niet meegegeven
+            if "lat" not in geboortedata and bd["plaats"]:
+                loc = _resolve_plaats(bd["plaats"])
+                if loc:
+                    bd["lat"] = loc["lat"]
+                    bd["lon"] = loc["lon"]
+            sessie.birth_data = bd
+            sessie.naam = bd["naam"]
+            sessie.intake_fase = "compleet"
+            sessie.stem_data = bereken_stem_data(bd)
+        except (KeyError, ValueError):
+            pass  # ongeldige data, val terug op normale intake
 
     if profiel_key and not sessie.birth_data:
         if _check_profiel_toegang(profiel_key, profiel_code):
