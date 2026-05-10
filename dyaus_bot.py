@@ -384,72 +384,20 @@ def dyaus_antwoord(
 def _handle_intake(sessie: DyausSessie, bericht: str) -> dict:
     fase = sessie.intake_fase
 
-    if fase == "start":
+    if fase == "start" or fase == "naam":
         # Frontend heeft al "Wie ben je?" getoond, dus het eerste bericht
-        # IS de naam. Behandel direct als naam-fase.
+        # IS de naam. Sla op en ga door naar datum.
         naam = bericht.strip()
-        if naam:
-            profiel = _zoek_profiel(naam)
-            if profiel:
-                key, bd = profiel
-                sessie.birth_data = bd
-                sessie.naam = bd["naam"]
-                sessie.profiel_key = key
-                sessie.intake_fase = "compleet"
-                sessie.stem_data = bereken_stem_data(bd)
-                antwoord = _genereer_begroeting(sessie)
-                sessie.voeg_bericht_toe("assistant", antwoord)
-                return {
-                    "antwoord": antwoord,
-                    "intake_fase": "compleet",
-                    "profiel_compleet": True,
-                    "naam": sessie.naam,
-                }
-            # Geen profiel gevonden — sla naam op, vraag geboortedatum
-            sessie.naam = naam
-            if not sessie.birth_data:
-                sessie.birth_data = {"naam": naam}
-            else:
-                sessie.birth_data["naam"] = naam
-            sessie.intake_fase = "datum"
-            antwoord = f"{naam}. Wanneer ben je geboren?"
+        if not naam:
+            antwoord = "Hoe heet je?"
+            sessie.intake_fase = "naam"
             sessie.voeg_bericht_toe("assistant", antwoord)
             return {
                 "antwoord": antwoord,
-                "intake_fase": "datum",
+                "intake_fase": "naam",
                 "profiel_compleet": False,
-                "naam": naam,
+                "naam": "",
             }
-
-        sessie.intake_fase = "naam"
-        antwoord = "Hoe heet je?"
-        sessie.voeg_bericht_toe("assistant", antwoord)
-        return {
-            "antwoord": antwoord,
-            "intake_fase": "naam",
-            "profiel_compleet": False,
-            "naam": "",
-        }
-
-    if fase == "naam":
-        naam = bericht.strip()
-        if DYAUS_MODUS == "open":
-            profiel = _zoek_profiel(naam)
-            if profiel:
-                key, bd = profiel
-                sessie.birth_data = bd
-                sessie.naam = bd["naam"]
-                sessie.profiel_key = key
-                sessie.intake_fase = "compleet"
-                sessie.stem_data = bereken_stem_data(bd)
-                antwoord = _genereer_begroeting(sessie)
-                sessie.voeg_bericht_toe("assistant", antwoord)
-                return {
-                    "antwoord": antwoord,
-                    "intake_fase": "compleet",
-                    "profiel_compleet": True,
-                    "naam": sessie.naam,
-                }
 
         sessie.naam = naam
         if not sessie.birth_data:
