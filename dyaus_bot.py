@@ -385,8 +385,11 @@ def _handle_intake(sessie: DyausSessie, bericht: str) -> dict:
     fase = sessie.intake_fase
 
     if fase == "start":
-        if DYAUS_MODUS == "open":
-            profiel = _zoek_profiel(bericht.strip())
+        # Frontend heeft al "Wie ben je?" getoond, dus het eerste bericht
+        # IS de naam. Behandel direct als naam-fase.
+        naam = bericht.strip()
+        if naam:
+            profiel = _zoek_profiel(naam)
             if profiel:
                 key, bd = profiel
                 sessie.birth_data = bd
@@ -402,6 +405,21 @@ def _handle_intake(sessie: DyausSessie, bericht: str) -> dict:
                     "profiel_compleet": True,
                     "naam": sessie.naam,
                 }
+            # Geen profiel gevonden — sla naam op, vraag geboortedatum
+            sessie.naam = naam
+            if not sessie.birth_data:
+                sessie.birth_data = {"naam": naam}
+            else:
+                sessie.birth_data["naam"] = naam
+            sessie.intake_fase = "datum"
+            antwoord = f"{naam}. Wanneer ben je geboren?"
+            sessie.voeg_bericht_toe("assistant", antwoord)
+            return {
+                "antwoord": antwoord,
+                "intake_fase": "datum",
+                "profiel_compleet": False,
+                "naam": naam,
+            }
 
         sessie.intake_fase = "naam"
         antwoord = "Hoe heet je?"
