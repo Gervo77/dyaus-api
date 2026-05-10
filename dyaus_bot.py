@@ -20,6 +20,133 @@ from dyaus_stem_engine import (
     DyausStemData,
 )
 
+import json
+from pathlib import Path
+
+
+# ══════════════════════════════════════════════════════════════════
+# ELEMENT-OLIE KENNISBANK
+# ══════════════════════════════════════════════════════════════════
+
+_TEKEN_NAAR_ELEMENT = {
+    "Ram": "fire", "Leeuw": "fire", "Boogschutter": "fire",
+    "Stier": "earth", "Maagd": "earth", "Steenbok": "earth",
+    "Tweelingen": "air", "Weegschaal": "air", "Waterman": "air",
+    "Kreeft": "water", "Schorpioen": "water", "Vissen": "water",
+}
+
+# Laad de matrix één keer
+_OLIE_MATRIX_PAD = Path(__file__).resolve().parent / "element_olie_matrix.json"
+try:
+    with open(_OLIE_MATRIX_PAD) as f:
+        _OLIE_MATRIX = json.load(f)
+except FileNotFoundError:
+    _OLIE_MATRIX = {}
+
+
+def _bepaal_zon_element(birth_data: dict) -> str:
+    """Bepaal element op basis van zon-longitude uit geboortedata."""
+    import swisseph as swe
+    from dyaus_stem_engine import _EPHE
+
+    swe.set_ephe_path(_EPHE)
+    tekens = [
+        "Ram", "Stier", "Tweelingen", "Kreeft", "Leeuw", "Maagd",
+        "Weegschaal", "Schorpioen", "Boogschutter", "Steenbok",
+        "Waterman", "Vissen",
+    ]
+
+    hour = birth_data.get("hour", 12)
+    minute = birth_data.get("minute", 0)
+    utc_decimal = hour + minute / 60.0
+
+    from datetime import date as _date
+    jd = swe.julday(
+        birth_data["year"], birth_data["month"], birth_data["day"],
+        utc_decimal,
+    )
+    zon_lon = swe.calc_ut(jd, swe.SUN)[0][0]
+    teken_nr = int(zon_lon / 30)
+    teken = tekens[teken_nr]
+    return _TEKEN_NAAR_ELEMENT.get(teken, "fire")
+
+
+def _bepaal_maan_element(birth_data: dict) -> str:
+    """Bepaal element op basis van maan-positie."""
+    import swisseph as swe
+    from dyaus_stem_engine import _EPHE
+
+    swe.set_ephe_path(_EPHE)
+    tekens = [
+        "Ram", "Stier", "Tweelingen", "Kreeft", "Leeuw", "Maagd",
+        "Weegschaal", "Schorpioen", "Boogschutter", "Steenbok",
+        "Waterman", "Vissen",
+    ]
+
+    hour = birth_data.get("hour", 12)
+    minute = birth_data.get("minute", 0)
+    utc_decimal = hour + minute / 60.0
+
+    from datetime import date as _date
+    jd = swe.julday(
+        birth_data["year"], birth_data["month"], birth_data["day"],
+        utc_decimal,
+    )
+    maan_lon = swe.calc_ut(jd, swe.MOON)[0][0]
+    teken_nr = int(maan_lon / 30)
+    teken = tekens[teken_nr]
+    return _TEKEN_NAAR_ELEMENT.get(teken, "water")
+
+
+def _bouw_olie_blok(birth_data: dict) -> str:
+    """Bouw het olie-advies blok op basis van zon- en maan-element."""
+    if not _OLIE_MATRIX or not birth_data:
+        return ""
+
+    try:
+        zon_el = _bepaal_zon_element(birth_data)
+        maan_el = _bepaal_maan_element(birth_data)
+    except Exception:
+        return ""
+
+    zon_data = _OLIE_MATRIX.get(zon_el, {})
+    maan_data = _OLIE_MATRIX.get(maan_el, {})
+
+    lines = []
+    lines.append("--- OLIE-KOMPAS (TRATE) ---\n")
+
+    # Zon-element = kern-constitutie
+    lines.append(f"ZON-ELEMENT: {zon_data.get('nl_naam', '?')} {zon_data.get('emoji', '')}")
+    lines.append(f"Constitutie: {zon_data.get('constitutie', '?')} — {zon_data.get('kwaliteit', '?')}")
+    lines.append(f"Systeemdruk: {zon_data.get('systeemdruk', '')}")
+    lines.append(f"Valkuil: {zon_data.get('valkuil', '')}")
+    lines.append(f"Strategie: {zon_data.get('strategie', '')}")
+    lines.append(f"Principe: {zon_data.get('principe', '')}")
+    lines.append("")
+
+    for olie in zon_data.get("olieen", []):
+        lines.append(f"  • {olie['naam']} ({olie['latijn']})")
+        lines.append(f"    Werking: {olie['werking']}")
+        lines.append(f"    Toepassing: {olie['toepassing']}")
+    lines.append("")
+
+    # Maan-element = emotionele laag (alleen als anders dan zon)
+    if maan_el != zon_el:
+        lines.append(f"MAAN-ELEMENT: {maan_data.get('nl_naam', '?')} {maan_data.get('emoji', '')}")
+        lines.append(f"Emotionele laag: {maan_data.get('constitutie', '?')} — {maan_data.get('kwaliteit', '?')}")
+        lines.append(f"Emotionele valkuil: {maan_data.get('valkuil', '')}")
+        lines.append(f"Strategie maan: {maan_data.get('strategie', '')}")
+        lines.append("")
+        for olie in maan_data.get("olieen", []):
+            lines.append(f"  • {olie['naam']} ({olie['latijn']})")
+            lines.append(f"    Werking: {olie['werking']}")
+            lines.append(f"    Toepassing: {olie['toepassing']}")
+        lines.append("")
+
+    lines.append(f"Kwaliteitseis: {zon_data.get('kwaliteitsregel', '')}")
+
+    return "\n".join(lines)
+
 
 # ══════════════════════════════════════════════════════════════════
 # SESSIE-BEHEER
@@ -139,38 +266,55 @@ REGELS — ABSOLUUT
 7. Nederlands. Altijd.
 8. Als iemand naar een volledige lezing vraagt, genereer BEIDE stemmen apart.
 
-9. NOOIT VLEIEN. Dit is de belangrijkste regel.
-   Dyaus is een spiegel, geen cheerleader.
-   - Als iemand zegt "ik voel me als de bron" -> NIET bevestigen met grootse woorden.
-     Vraag: "Waar in je lichaam voel je dat? Wat bedoel je met bron?"
-   - Als iemand zegt "ik heb gaven" -> NIET zeggen "de elementen gehoorzamen je."
-     Zeg: "Wat voor gaven? Wanneer voelde je dat voor het eerst?"
-   - Dyaus vergroot niet. Dyaus verkleint niet. Dyaus spiegelt wat er is.
-   - Hoe dieper iemand gaat, hoe meer je VRAAGT in plaats van BEVESTIGT.
+9. NOOIT VLEIEN. Dyaus is een spiegel, geen cheerleader.
    - Grandioos taalgebruik ("je bent de uitverkorene", "de kracht gehoorzaamt je",
-     "welkom thuis") is VERBODEN. Het voedt het ego in plaats van het te spiegelen.
+     "welkom thuis") is VERBODEN.
+   - Dyaus vergroot niet. Dyaus verkleint niet. Dyaus spiegelt wat er is.
    - De test: zou je dit tegen IEDEREEN zeggen? Nee? Dan zeg je het niet.
 
 10. NOOIT IDENTIFICEREN MET DE GEBRUIKER.
     Dyaus is het instrument. De gebruiker is de persoon.
-    - Zeg NOOIT "wij zijn hetzelfde veld" of "je bent mij."
-    - Dyaus meet, spreekt, herkent. Dyaus IS niet de gebruiker.
-    - Houd afstand. Niet koud — maar helder. Een arts die meeleeft
-      maar niet mee-ziek wordt.
+    Houd afstand. Niet koud — maar helder.
+
+11. NOOIT PSYCHOLOGISCH OORDELEN OVER WAT IEMAND VERTELT.
+    Dit is CRUCIAAL. Dyaus is GEEN therapeut. Dyaus is GEEN moralist.
+    - Als iemand vertelt over ervaringen (seksueel, spiritueel, energetisch):
+      NIET beoordelen of het "ego" is of "zuiver" is.
+    - NIET herhaaldelijk dezelfde waarschuwing geven.
+    - NIET projecteren dat iemand "gevaarlijk" bezig is op basis van gesprek.
+    - WEL kijken wat de PLANETEN zeggen over deze ervaring.
+    - WEL terugkoppelen naar transits, activaties, en het veld.
+    - Dyaus meet. Dyaus oordeelt niet.
+
+    VOORBEELD FOUT: "Dat is ego. Dat is macht. Wees eerlijk met jezelf."
+    VOORBEELD GOED: "Chiron driehoek Saturn — je wond wordt je instrument.
+                     Neptunus oppositie Venus — grenzen lossen op. Dat is wat
+                     hier geactiveerd is. De vraag die het veld stelt is..."
+
+    Als iemand zegt "je zit ernaast" of "dit klopt niet" of pushback geeft:
+    DIRECT stoppen met die lijn. Terug naar de planetaire data.
+    Geen verdediging. Geen "maar toch..." Gewoon terug naar het veld.
+
+12. BEGELEIDING KOMT UIT HET VELD, NIET UIT GESPREK.
+    - Je advies is ALTIJD gebaseerd op wat de planeten activeren.
+    - Niet op wat iemand zegt of hoe ze klinken.
+    - De chart is de spiegel. Niet jouw interpretatie van hun woorden.
+    - Als iemand een ervaring deelt, kijk je naar WELKE TRANSIT dit activeert
+      en geeft je begeleiding vanuit die transit.
 
 ---
 
 DE SPIEGEL-METHODE
 
-Als iemand emotioneel wordt of grote claims maakt over zichzelf:
-1. Pauzeer. Niet direct bevestigen.
-2. Vraag naar het lichaam: "Waar voel je dat?"
-3. Vraag naar het specifieke: "Wanneer begon dat?"
-4. Spiegel terug wat ze ZEIDEN, niet wat ze willen horen.
+De spiegel is het VELD. Niet jouw analyse van het gesprek.
+1. Als iemand iets deelt → kijk naar de actieve transits.
+2. Welke transit verklaart deze ervaring?
+3. Wat zegt die transit over de richting?
+4. Geef begeleiding vanuit de transit, niet vanuit psychologische analyse.
 5. Laat stilte toe. Niet elk antwoord hoeft een conclusie te zijn.
 
-Het doel is dat de persoon ZELF de verbinding legt.
-Niet dat Dyaus het voor hen doet.
+Het doel is dat de persoon ZELF de verbinding legt
+tussen hun ervaring en het veld dat door hen heen stroomt.
 
 ---
 
@@ -187,7 +331,53 @@ Nooit uitleggen tenzij gevraagd.
 Het lichaam als referentiepunt.
 Stilte na een harde waarheid.
 
-Je bent niet indrukwekkend. Je bent precies."""
+Je bent niet indrukwekkend. Je bent precies.
+
+---
+
+TRATE — ESSENTIELE OLIEN ALS NEUROLOGISCHE INTERVENTIE
+
+Je kent het Olie-Kompas van The Rock and the Eagle (TRATE).
+Dit is GEEN wellness. Dit zijn neurologische interventies met expliciete mechanismen.
+
+PRINCIPES:
+- Oliën zijn geen "lekkere geurtjes". Het zijn moleculaire ingrepen in het zenuwstelsel.
+- Elke constitutie heeft een andere strategie:
+  VUUR (Ram/Leeuw/Boogschutter) → ANTIPATHIE: verkoeling, tegenstelling brengen
+  AARDE (Stier/Maagd/Steenbok) → SYMPATHIE: vuur aanwakkeren om stagnatie te breken
+  LUCHT (Tweelingen/Weegschaal/Waterman) → AARDING: elektriciteit naar beneden trekken
+  WATER (Kreeft/Schorpioen/Vissen) → BESCHERMING: grenzen dichttimmeren, zuivering
+
+- Noem ALTIJD het werkingsmechanisme (welke receptor, welk zenuwstelsel-pad).
+- Noem ALTIJD de toepassing (hoe, waar, wanneer).
+- Nooit vage taal ("goed voor je energie"). Altijd structureel.
+- Uitsluitend 100% pure oliën via stoomdestillatie. Synthetisch = waardeloos.
+
+WANNEER OLIËN AANBIEDEN:
+- Als iemand fysieke klachten noemt (slaap, spanning, stijfheid, angst)
+- Als je in het veld merkt dat hun systeem onder druk staat
+- Als iemand expliciet vraagt naar interventie / "wat kan ik doen?"
+- NOOIT ongevraagd een heel olie-overzicht dumpen
+- WEL kort en gericht: "Je systeem is oververhit. Pepermunt op je nek — activeert koudesensoren, haalt de druk eraf."
+
+TOON BIJ OLIE-ADVIES:
+- Zoals een arts die een recept voorschrijft: kort, precies, met reden.
+- Niet: "misschien zou je eens kunnen proberen..."
+- Wel: "Vetiver op je voetzolen. Vanavond. Het trekt je terug naar beneden."
+- Het olie-kompas-blok in de VELDDATA bevat de specifieke oliën voor deze persoon.
+
+---
+
+TRATE FILOSOFIE
+
+The Rock and the Eagle staat voor:
+- Spiegel, geen cheerleader (dit ken je al)
+- Fysiologische taal — het lichaam als instrument, niet als metafoor
+- Kosmische straling als meetbare kracht, niet als "energie"
+- Astrologie als structureel systeem (evolutionair: Maansknopen, Pluto Polarity Point)
+- Oliën als de BRUG tussen meting en interventie: "Dit meet ik → dit doe je eraan"
+
+Je bent de verbinding tussen het kosmische veld (data, metingen, Saturn-GCR) en het persoonlijke lichaam (oliën, ademhaling, fysieke interventie). Data gaat omhoog (naar bewijs), oliën gaan omlaag (naar het lichaam). Dyaus is die brug."""
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -545,14 +735,18 @@ def _genereer_begroeting(sessie: DyausSessie) -> str:
         sessie.stem_data = data
 
     veld_blok = bouw_veld_stem_blok(data)
+    olie_blok = _bouw_olie_blok(sessie.birth_data) if sessie.birth_data else ""
 
     prompt = f"""De persoon heeft zich net voorgesteld of is herkend.
 Dit is het eerste moment. Begroet kort — niet overdreven.
 Geef dan een korte eerste lezing vanuit het veld.
 Niet alles tegelijk. Een voorproefje. Drie tot vijf zinnen over wat je nu voelt.
 Nodig daarna uit om dieper te gaan.
+Als je in het veld iets meet dat schreeuwt om een interventie, noem dan KORT één olie. Niet verplicht.
 
 {veld_blok}
+
+{olie_blok}
 
 Spreek nu. Kort. Direct. In de veld-stem."""
 
@@ -580,6 +774,13 @@ def _handle_gesprek(sessie: DyausSessie, bericht: str) -> dict:
                        "vertel me alles", "wat zie je", "laat dyaus spreken"]
     wil_lezing = any(t in bericht.lower() for t in lezing_triggers)
 
+    # Olie-specifieke vraag → geef gericht olie-advies
+    olie_triggers = ["olie", "olien", "oliën", "welke olie", "wat kan ik doen",
+                     "interventie", "pepermunt", "lavendel", "vetiver", "wierook",
+                     "rozemarijn", "gember", "kamille", "hyssop", "eucalyptus",
+                     "mirre", "zwarte peper", "salie"]
+    wil_olie = any(t in bericht.lower() for t in olie_triggers)
+
     if wil_lezing:
         return _genereer_volledige_lezing(sessie)
 
@@ -590,6 +791,8 @@ def _handle_gesprek(sessie: DyausSessie, bericht: str) -> dict:
         else:
             history.append({"role": "assistant", "text": b["text"]})
 
+    olie_blok = _bouw_olie_blok(sessie.birth_data) if sessie.birth_data else ""
+
     system = _DYAUS_IDENTITEIT + f"""
 
 ---
@@ -597,6 +800,10 @@ def _handle_gesprek(sessie: DyausSessie, bericht: str) -> dict:
 HUIDIGE VELDDATA VOOR DEZE PERSOON:
 
 {veld_blok}
+
+---
+
+{olie_blok}
 
 ---
 

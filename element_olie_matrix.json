@@ -1,0 +1,130 @@
+{
+  "fire": {
+    "nl_naam": "Vuur",
+    "emoji": "🔥",
+    "tekens": ["Ram", "Leeuw", "Boogschutter", "Aries", "Leo", "Sagittarius"],
+    "constitutie": "Cholerisch",
+    "kwaliteit": "Heet en droog",
+    "systeemdruk": "Brandt op. Hitte in lever en gal, zenuwstelsel constant op 'aan'. Overlevingsmechanisme = actie. De ketel staat onder druk.",
+    "valkuil": "Woede, slapeloosheid, hyperactiviteit, overkokende spijsvertering, inflammatie",
+    "strategie": "ANTIPATHIE — verkoeling en bevochtiging",
+    "principe": "Genezing door het tegenovergestelde te brengen",
+    "olieen": [
+      {
+        "naam": "Pepermunt",
+        "latijn": "Mentha piperita",
+        "werking": "Koelt de fysieke hitte en overkokende spijsvertering. Haalt direct de druk van de ketel. Mentol activeert koudesensoren in het zenuwstelsel — feitelijke temperatuurregulatie van binnenuit.",
+        "toepassing": "Inhalatie of verdunnd op nek/borst bij hittegevoelens en spijsverteringsspanning"
+      },
+      {
+        "naam": "Kamille",
+        "latijn": "Matricaria chamomilla / Chamaemelum nobile",
+        "werking": "Blusser van de ontstoken, gefrustreerde geest. Kalmeert de zonnevlecht (solar plexus) via het enterisch zenuwstelsel. Ultieme remedie tegen de woede en kramp die ontstaat als de Vuur-persoon wordt gedwarsboomd.",
+        "toepassing": "Massage op buik en solar plexus, of in bad bij emotionele spanning"
+      },
+      {
+        "naam": "Lavendel",
+        "latijn": "Lavandula angustifolia",
+        "werking": "Sedatie voor het Shen (de geest). Waar het vuur zorgt voor slapeloosheid en hyperactiviteit (te veel Yang), kalmeert lavendel het hart en zenuwstelsel direct via het limbisch systeem.",
+        "toepassing": "Diffuser 's nachts, of direct op polsen bij slaapproblemen en overprikkeling"
+      }
+    ],
+    "kwaliteitsregel": "Uitsluitend 100% pure oliën via stoomdestillatie. Synthetische geurvloeistoffen hebben nul therapeutische waarde en veroorzaken extra hoofdpijn bij het al overkokende systeem."
+  },
+  "earth": {
+    "nl_naam": "Aarde",
+    "emoji": "🌍",
+    "tekens": ["Stier", "Maagd", "Steenbok", "Taurus", "Virgo", "Capricorn"],
+    "constitutie": "Melancholisch",
+    "kwaliteit": "Koud en droog",
+    "systeemdruk": "Verharding, stagnatie, kristallisatie (Saturnus). Energie stroomt niet — maar stolt in gewrichten en weefsels. Apathie en zwaarte als energie vastloopt.",
+    "valkuil": "Stijfheid, slechte doorbloeding, depressie, gewrichtspijn, geblokkeerde wilskracht",
+    "strategie": "SYMPATHIE & VUUROPSLAG — vuur aanwakkeren om aarde te ontdooien",
+    "principe": "Activeren wat stolt door gelijkaardig principe te versterken",
+    "olieen": [
+      {
+        "naam": "Rozemarijn",
+        "latijn": "Rosmarinus officinalis",
+        "werking": "De activator. Dwingt bloed en Qi (levenskracht) krachtig omhoog naar het hoofd en het hart. Breekt door de apathie en zwaarte van de melancholische staat heen. Stimuleert acetylcholine — neurotransmitter voor focus en actie.",
+        "toepassing": "Inhalatie 's ochtends, of massage op nek en schouders voor mentale activatie"
+      },
+      {
+        "naam": "Zwarte Peper",
+        "latijn": "Piper nigrum",
+        "werking": "Brengt acute hitte naar plekken van stijfheid. Verdrijft de koude pijnen en verhardingen van Saturnus door pure, martiale hitte. Stimuleert de doorbloeding en lymfatische circulatie.",
+        "toepassing": "Verdund in draagolie, massage op stijve gewrichten en spieren (altijd verdunnen: 1-2%)"
+      },
+      {
+        "naam": "Gember",
+        "latijn": "Zingiber officinale",
+        "werking": "De schop onder de kont. Stookt het innerlijke vuur weer op in de nieren (in TCM: de zetel van wilskracht en vitale energie). Dwingt wilskracht en fysieke aandrijving terug in een vastgelopen systeem.",
+        "toepassing": "Inhalatie of in warm bad bij vermoeidheid en gebrek aan motivatie"
+      }
+    ],
+    "kwaliteitsregel": "Uitsluitend 100% pure oliën via stoomdestillatie. Het gestolde systeem heeft de echte moleculaire prikkel nodig — synthetische producten versterken de verdoving."
+  },
+  "air": {
+    "nl_naam": "Lucht",
+    "emoji": "💨",
+    "tekens": ["Tweelingen", "Weegschaal", "Waterman", "Gemini", "Libra", "Aquarius"],
+    "constitutie": "Sanguinisch",
+    "kwaliteit": "Heet en vochtig",
+    "systeemdruk": "Versnippering. Zenuwstelsel overprikkeld door constante mentale storm (Mercurius/Uranus). De verbinding met het fysieke lichaam gaat verloren. Eindeloos analyseren zonder landing.",
+    "valkuil": "Angst, zenuwuitputting, concentratieproblemen, hyperventilatie, ontaarding",
+    "strategie": "AARDING & FOCUS — elektriciteit uit het hoofd trekken en verankeren",
+    "principe": "Verbinding herstellen tussen intellect en lichaam",
+    "olieen": [
+      {
+        "naam": "Vetiver",
+        "latijn": "Chrysopogon zizanioides",
+        "werking": "De zwaarste wortel. Trekt de weggewaaide Chi met geweld terug naar de aarde en het lichaam. Voedt, kalmeert een oververhit brein en herstelt de basisidentiteit. Klinisch onderzocht als effectief bij ADHD-profielen.",
+        "toepassing": "Op voetzolen voor maximale aarding, of 's nachts in diffuser"
+      },
+      {
+        "naam": "Wierook (Frankincense)",
+        "latijn": "Boswellia sacra / carterii",
+        "werking": "De vertrager. Wierook dwingt een jachtige ademhaling om diep en ritmisch te worden — activeert het parasympatisch zenuwstelsel direct. Stopt de constante stroom van over-analyseren en grondt het intellect.",
+        "toepassing": "Bewuste ademhaling: 4 tellen inademen terwijl je inhaaleert, 6 tellen uitademen"
+      },
+      {
+        "naam": "Salie (Scharlei)",
+        "latijn": "Salvia sclarea",
+        "werking": "Snijdt door de mentale mist en chaos heen. Herstelt het gezonde oordeelsvermogen en bevrijdt de lucht-persoon van illusies en zenuwuitputting. Bevat linalylacetaat — sterkste krampopheffende stof uit de aromatheek.",
+        "toepassing": "Inhalatie bij mentale verwarring of beslissingsmoeheid"
+      }
+    ],
+    "kwaliteitsregel": "Uitsluitend 100% pure oliën via stoomdestillatie. Het overprikkelde systeem reageert als eerste op chemische vervalsingen — synthetische fragrances verergeren de overprikkeling."
+  },
+  "water": {
+    "nl_naam": "Water",
+    "emoji": "🌊",
+    "tekens": ["Kreeft", "Schorpioen", "Vissen", "Cancer", "Scorpio", "Pisces"],
+    "constitutie": "Flegmatisch",
+    "kwaliteit": "Koud en vochtig",
+    "systeemdruk": "Werkt als een spons — absorbeert alle emotionele en toxische lading uit de omgeving. Lymfatische stagnatie, oedeem, slijmvorming, diepe onverklaarbare vermoeidheid.",
+    "valkuil": "Grenzeloosheid, toxische absorptie, lymfestase, immuunzwakte, emotioneel overvolle systeem",
+    "strategie": "BESCHERMING & PURGE — moeras droogleggen, weefsel reinigen, grenzen dichttimmeren",
+    "principe": "Zuivering en energetische bescherming van de hypergevoelige systemen",
+    "olieen": [
+      {
+        "naam": "Hyssop",
+        "latijn": "Hyssopus officinalis",
+        "werking": "Het ultieme zuiveringskruid. 'Opent de borstkas', drijft zwaar slijm af en beschermt de persoon tegen het absorberen van andermans negatieve emoties of spanningen uit de omgeving. Bijbelse reiniging.",
+        "toepassing": "Inhalatie vóór moeilijke sociale situaties, of borst-massage na intensief contact"
+      },
+      {
+        "naam": "Eucalyptus",
+        "latijn": "Eucalyptus globulus / radiata",
+        "werking": "De klarier. Snijdt door de mist van emotionele verwarring heen. Versterkt de fysieke en energetische verdedigingslinie (immuunsysteem) en opent de longen om weer vrij en onbelast te ademen.",
+        "toepassing": "Diffuser na emotioneel belastende situaties, of in stoomdouche"
+      },
+      {
+        "naam": "Mirre",
+        "latijn": "Commiphora myrrha",
+        "werking": "De afsluiter. Mirre heelt wonden, zowel fysiek als emotioneel. Het bouwt een brug tussen het materiële en het spirituele, en creëert een beschermend, kalmerend schild rondom de overgevoelige psyche.",
+        "toepassing": "Op hartchakra en onderbewust (laag op buik) als dagelijks beschermingsritueel"
+      }
+    ],
+    "kwaliteitsregel": "Uitsluitend 100% pure oliën via stoomdestillatie. De hypergevoelige constitutie is het meest kwetsbaar voor chemische additieven — zuiverheid is hier geen luxe maar noodzaak."
+  }
+}
